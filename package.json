@@ -1,0 +1,37 @@
+{
+  "name": "daxfb-calculator-link-generator",
+  "version": "1.0.0",
+  "description": "Short link generator for daxfb-calculator",
+  "scripts": {
+    "serve": "ts-node src/server.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/doubleaxe/daxfb-calculator-link-generator.git"
+  },
+  "author": "Alexey Usov (dax@xdax.ru, https://github.com/doubleaxe)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/doubleaxe/daxfb-calculator-link-generator/issues"
+  },
+  "homepage": "https://github.com/doubleaxe/daxfb-calculator-link-generator#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "promised-sqlite3": "^2.0.1",
+    "sqlite3": "^5.1.6",
+    "yargs": "^17.7.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/node": "^18.15.13",
+    "@types/yargs": "^17.0.24",
+    "@typescript-eslint/eslint-plugin": "^5.59.0",
+    "@typescript-eslint/parser": "^5.59.0",
+    "eslint": "^8.39.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9"
+  }
+}
