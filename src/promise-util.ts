@@ -18,3 +18,7 @@ export function promiseTimeout<T>(ms: number, promise?: Promise<T>, noThrow?: bo
         return result;
     });
 }
+
+export function setTimeoutAsync(ms: number) {
+    return new Promise(function(resolve) { setTimeout(resolve, ms); });
+}

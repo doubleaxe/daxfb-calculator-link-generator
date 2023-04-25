@@ -5,10 +5,11 @@ Please don't remove this comment if you use unmodified file
 
 import express from 'express';
 import yargs from 'yargs';
-import {AsyncDatabase} from 'promised-sqlite3';
+import {Sequelize} from '@sequelize/core';
+import cors from 'cors';
 import type {Server} from 'node:http';
 import {terminate, onTerminate} from './terminator';
-import database from './db';
+import {registerModels} from './db';
 import api from './api';
 
 const args = yargs
@@ -26,19 +27,41 @@ const args = yargs
             type: 'string',
             default: ':memory:',
         },
+        proxy: {
+            type: 'string',
+            default: 'loopback',
+        },
+        salt: {
+            type: 'string',
+            default: 'daxfb-calculator-link-generator',
+        },
     })
     .parseSync();
 
 (async() => {
-    const sqlite = await AsyncDatabase.open(args.db);
-    onTerminate(() => sqlite.close());
+    const sequelize = new Sequelize({
+        dialect: 'sqlite',
+        storage: args.db,
+        define: {
+            underscored: true,
+        },
+        disableClsTransactions: true,
+    });
+    await sequelize.authenticate();
+    await sequelize.query('PRAGMA journal_mode=WAL;');
+    onTerminate(() => sequelize.close());
 
-    const db = database(sqlite);
-    await db.prepare();
+    const models = await registerModels(sequelize);
 
     const app = express();
     app.use(express.json());
-    app.post('/api/:command', api);
+    app.use(cors({
+        methods: ['GET', 'POST'],
+        allowedHeaders: ['Content-Type'],
+    }));
+    app.disable('x-powered-by');
+    app.set('trust proxy', args.proxy);
+    app.post('/linkapi/:command', api(models, args.salt));
 
     const server = await new Promise<Server>((resolve) => {
         const server0 = app.listen(args.port, args.host, function() {
