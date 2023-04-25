@@ -8,6 +8,7 @@ import crypto from 'node:crypto';
 import Hashids from 'hashids';
 import type {Models} from './db';
 import {setTimeoutAsync} from './promise-util';
+import type {Transaction} from '@sequelize/core';
 
 class ApiError extends Error {
     constructor(reason: string, message: string) {
@@ -58,7 +59,7 @@ async function save(req: Request, models: Models) {
     //TODO - syntax check
     const blueprintHash = crypto.createHash('sha256').update(blueprintData).digest('base64');
 
-    const transaction = await models.sequelize.startUnmanagedTransaction();
+    let transaction: Transaction | null = await models.sequelize.startUnmanagedTransaction();
     try {
         const session = await models.Session.findOne({
             where: {
@@ -68,6 +69,7 @@ async function save(req: Request, models: Models) {
         });
         if(!session) {
             await transaction.rollback();
+            transaction = null;
             await setTimeoutAsync(5000);
             throw new ApiError('err:session', 'session not found');
         }
@@ -111,7 +113,9 @@ async function save(req: Request, models: Models) {
         await transaction.commit();
         return {link: encodedBlueprintId};
     } catch(err) {
-        await transaction.rollback();
+        if(transaction) {
+            await transaction.rollback();
+        }
         throw err;
     }
 }
