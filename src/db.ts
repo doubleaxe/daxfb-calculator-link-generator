@@ -160,7 +160,7 @@ export async function registerModels(sequelize: Sequelize) {
 
     User.belongsToMany(Blueprint, {through: UserBlueprint, otherKey: 'blueprintId', foreignKey: 'userId'});
 
-    await sequelize.sync({alter: true});
+    await sequelize.sync();
 
     return {
         Blueprint,
