@@ -18,6 +18,7 @@ import type {
     BelongsToManyRemoveAssociationMixin,
     BelongsToManyRemoveAssociationsMixin,
     BelongsToManyCreateAssociationMixin,
+    NonAttribute,
 } from '@sequelize/core';
 import {
     Model,
@@ -29,17 +30,13 @@ class Blueprint extends Model<InferAttributes<Blueprint>, InferCreationAttribute
     declare data: string;
     declare hash: string;
     declare gameId: string;
-    declare link: string | null;
     declare createdAt: Date;
     declare accessedAt: Date;
-
-    declare getSessions: BelongsToManyGetAssociationsMixin<Session>;
 }
 
-class Session extends Model<InferAttributes<Session>, InferCreationAttributes<Session>> {
-    declare sessionId: CreationOptional<number>;
+class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
+    declare userId: CreationOptional<number>;
     declare ip: string | null;
-    declare session: string;
     declare createdAt: Date;
     declare accessedAt: Date;
 
@@ -53,6 +50,17 @@ class Session extends Model<InferAttributes<Session>, InferCreationAttributes<Se
     declare removeBlueprint: BelongsToManyRemoveAssociationMixin<Blueprint, number>;
     declare removeBlueprints: BelongsToManyRemoveAssociationsMixin<Blueprint, number>;
     declare createBlueprint: BelongsToManyCreateAssociationMixin<Blueprint>;
+}
+
+class UserBlueprint extends Model<InferAttributes<UserBlueprint>, InferCreationAttributes<UserBlueprint>> {
+    declare userBlueprintId: CreationOptional<number>;
+    declare userId: number;
+    declare blueprintId: number;
+    declare blueprintName: string | null;
+    declare createdAt: Date;
+    declare accessedAt: Date;
+
+    declare blueprint?: NonAttribute<Blueprint>;
 }
 
 export async function registerModels(sequelize: Sequelize) {
@@ -74,8 +82,33 @@ export async function registerModels(sequelize: Sequelize) {
             type: DataTypes.STRING(50),
             allowNull: false,
         },
-        link: {
-            type: DataTypes.STRING(1024),
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: DataTypes.NOW,
+        },
+        accessedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: DataTypes.NOW,
+        },
+    }, {
+        sequelize,
+        modelName: 'blueprint',
+        indexes: [{
+            unique: true,
+            fields: ['game_id', 'hash'],
+        }],
+    });
+
+    User.init({
+        userId: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        ip: {
+            type: DataTypes.STRING(255),
             allowNull: true,
         },
         createdAt: {
@@ -89,28 +122,27 @@ export async function registerModels(sequelize: Sequelize) {
             defaultValue: DataTypes.NOW,
         },
     }, {
+        modelName: 'user',
         sequelize,
-        indexes: [{
-            unique: true,
-            fields: ['game_id', 'hash'],
-        }],
-        updatedAt: false,
     });
 
-    Session.init({
-        sessionId: {
+    UserBlueprint.init({
+        userBlueprintId: {
             type: DataTypes.INTEGER.UNSIGNED,
             primaryKey: true,
             autoIncrement: true,
         },
-        ip: {
+        userId: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: false,
+        },
+        blueprintId: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: false,
+        },
+        blueprintName: {
             type: DataTypes.STRING(255),
             allowNull: true,
-        },
-        session: {
-            type: DataTypes.STRING(255),
-            allowNull: false,
-            unique: true,
         },
         createdAt: {
             type: DataTypes.DATE,
@@ -120,18 +152,20 @@ export async function registerModels(sequelize: Sequelize) {
         accessedAt: {
             type: DataTypes.DATE,
             allowNull: false,
-            defaultValue: DataTypes.NOW,
         },
-    }, {sequelize, updatedAt: false});
+    }, {
+        modelName: 'user_blueprint',
+        sequelize,
+    });
 
-    const SessionBlueprint = Session.belongsToMany(Blueprint, {through: 'BlueprintSession', otherKey: 'blueprintId', foreignKey: 'sessionId'});
+    User.belongsToMany(Blueprint, {through: UserBlueprint, otherKey: 'blueprintId', foreignKey: 'userId'});
 
     await sequelize.sync({alter: true});
 
     return {
         Blueprint,
-        Session,
-        SessionBlueprint,
+        User,
+        UserBlueprint,
         sequelize,
     };
 }

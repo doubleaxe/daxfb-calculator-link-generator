@@ -5,50 +5,65 @@ Please don't remove this comment if you use unmodified file
 
 import express from 'express';
 import yargs from 'yargs';
-import {Sequelize} from '@sequelize/core';
+import {Sequelize, type Options as SequelizeOptions} from '@sequelize/core';
 import cors from 'cors';
 import type {Server} from 'node:http';
 import {terminate, onTerminate} from './terminator';
 import {registerModels} from './db';
 import api from './api';
+import {loadConfig} from './config';
 
 const args = yargs
     .strict()
     .options({
         port: {
             type: 'number',
-            default: 8080,
         },
         host: {
             type: 'string',
-            default: '0.0.0.0',
+        },
+        config: {
+            type: 'string',
         },
         db: {
             type: 'string',
-            default: ':memory:',
         },
         proxy: {
             type: 'string',
-            default: 'loopback',
         },
-        salt: {
+        secret: {
             type: 'string',
-            default: 'daxfb-calculator-link-generator',
         },
     })
     .parseSync();
 
 (async() => {
-    const sequelize = new Sequelize({
-        dialect: 'sqlite',
-        storage: args.db,
+    const config = loadConfig(args.config, args);
+
+    let sequelize: Sequelize;
+    const sequelizeOptions: SequelizeOptions = {
         define: {
             underscored: true,
+            updatedAt: false,
         },
         disableClsTransactions: true,
-    });
+    };
+    if(config.db === 'sqlite::memory:') {
+        //strange! 'sqlite::memory:' url gives 'no such table: users'
+        //like in memory table is dropped in between
+        sequelize = new Sequelize({
+            dialect: 'sqlite',
+            storage: ':memory:',
+            ...sequelizeOptions,
+        });
+    } else {
+        sequelize = new Sequelize(config.db, sequelizeOptions);
+    }
+
     await sequelize.authenticate();
-    await sequelize.query('PRAGMA journal_mode=WAL;');
+    if(sequelize.getDialect() == 'sqlite') {
+        await sequelize.query('PRAGMA journal_mode=WAL;');
+    }
     onTerminate(() => sequelize.close());
 
     const models = await registerModels(sequelize);
@@ -60,12 +75,12 @@ const args = yargs
         allowedHeaders: ['Content-Type'],
     }));
     app.disable('x-powered-by');
-    app.set('trust proxy', args.proxy);
-    app.post('/linkapi/:command', api(models, args.salt));
+    app.set('trust proxy', config.proxy);
+    app.post('/linkapi/:command', api(models, config));
 
     const server = await new Promise<Server>((resolve) => {
-        const server0 = app.listen(args.port, args.host, function() {
-            console.log(`listening ${args.host}:${args.port}`);
+        const server0 = app.listen(config.port, config.host, function() {
+            console.log(`listening ${config.host}:${config.port}`);
             resolve(server0);
         });
     });

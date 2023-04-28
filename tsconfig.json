@@ -6,6 +6,7 @@
     "types": ["node"],
     "baseUrl": ".",
     "lib": ["ES2022"],
+    "outDir": "dist",
     "strict": true,
     "noImplicitAny": true,
     "noImplicitOverride": true,
@@ -16,7 +17,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmitOnError": true
   },
   "ts-node": {
     "transpileOnly": true,
