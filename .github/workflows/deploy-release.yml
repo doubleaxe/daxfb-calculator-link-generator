@@ -31,7 +31,8 @@ jobs:
         run: echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
       - name: Zip release artifact
         run: |
-          zip -r daxfb-calculator-link-generator-${{ env.RELEASE_TAG }}.zip *
+          cp ../package.json ../pnpm-lock.yaml .
+          tar -cjf ../daxfb-calculator-link-generator-${{ env.RELEASE_TAG }}.tar.bz2 *
         working-directory: dist
       - name: Build changelog
         id: changelog
@@ -46,4 +47,4 @@ jobs:
           generate_release_notes: false
           body: ${{ steps.changelog.outputs.changelog }}
           files: |
-            dist/daxfb-calculator-link-generator-${{ env.RELEASE_TAG }}.zip
+            daxfb-calculator-link-generator-${{ env.RELEASE_TAG }}.tar.bz2
