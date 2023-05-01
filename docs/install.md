@@ -20,6 +20,7 @@ en_US.UTF-8
 
 
 apt install mc
+apt install zip
 groupadd -g 800 sysadmin
 useradd -g sysadmin -m -s /bin/bash -u 800 sysadmin
 passwd sysadmin
@@ -272,6 +273,49 @@ apt install -y nodejs
 node --version
 npm i -g pnpm
 pnpm -v
+
+mkdir /usr/local/lib/daxfb_blueprints
+cd /usr/local/lib/daxfb_blueprints
+curl --fail -s -L https://github.com/doubleaxe/daxfb-calculator-link-generator/releases/download/v1.0.2/daxfb-calculator-link-generator-v1.0.2.tar.bz2 | tar -xj
+pnpm --prod install
+
+mcedit etc/config.json
+***
+{
+    "host": "127.0.0.1",
+    "port": 8082,
+    "db": "mariadb://127.0.0.1:3306/daxfb_blueprints?user=daxfb_blueprints&password=password",
+    "proxy": "loopback",
+    "secret": "CHANGEME",
+    "hashid": "daxfb-calculator-link-generator"
+}
+***
+
+node src/server.js --config etc/config.json
+ctrl+C
+
+mcedit /etc/systemd/system/daxfb_blueprints.service
+***
+[Unit]
+Description=daxfb-calculator-link-generator
+
+[Service]
+Type=simple
+Restart=always
+WorkingDirectory=/usr/local/lib/daxfb_blueprints
+ExecStart=node /usr/local/lib/daxfb_blueprints/src/server.js --config etc/config.json
+StandardOutput=append:/var/log/daxfb_blueprints.log
+StandardError=inherit
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
+***
+
+systemctl daemon-reload
+systemctl enable daxfb_blueprints
+systemctl start daxfb_blueprints
+systemctl status daxfb_blueprints
 ```
 
 ## Local, setting up backup

@@ -68,7 +68,7 @@ export async function registerModels(sequelize: Sequelize) {
             autoIncrement: true,
         },
         data: {
-            type: DataTypes.STRING(20480),
+            type: DataTypes.TEXT,
             allowNull: false,
         },
         hash: {

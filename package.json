@@ -5,6 +5,7 @@
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "dev": "ts-node src/server.ts --config etc/config.json",
+    "prod": "node src/server.js --config etc/config.json",
     "debug": "node --loader ts-node/esm --inspect-brk src/server.ts --config etc/config.json",
     "build": "rimraf dist && tsc -p .",
     "lint": "eslint . --ext .ts --fix && tsc --noEmit"
