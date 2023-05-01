@@ -5,7 +5,7 @@ on:
       - v1.*
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: "deploy"
   cancel-in-progress: true
@@ -44,6 +44,6 @@ jobs:
           draft: true
           prerelease: false
           generate_release_notes: false
-          body_path: CHANGELOG.txt
+          body: ${{ steps.changelog.outputs.changelog }}
           files: |
             dist/daxfb-calculator-link-generator-${{ env.RELEASE_TAG }}.zip
