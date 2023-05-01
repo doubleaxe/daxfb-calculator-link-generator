@@ -37,6 +37,7 @@ const args = yargs
     })
     .parseSync();
 
+//use "db": "mariadb://localhost:3306/daxfb_blueprints?user=daxfb_blueprints&password=password"
 (async() => {
     const config = loadConfig(args.config, args);
 
@@ -63,6 +64,7 @@ const args = yargs
     await sequelize.authenticate();
     if(sequelize.getDialect() == 'sqlite') {
         await sequelize.query('PRAGMA journal_mode=WAL;');
+        await sequelize.query('PRAGMA hard_heap_limit=50000000;');
     }
     onTerminate(() => sequelize.close());
 

@@ -22,22 +22,15 @@ class ApiError extends Error {
 async function login(req: Request, models: Models, config: ConfigType) {
     const now = new Date();
     const ip = req.ip || req.socket?.remoteAddress || null;
-    const [user, created] = await models.User.findOrCreate({
+    const [user] = await models.User.findOrCreate({
         where: {
             ip,
         },
         defaults: {
             ip,
             createdAt: now,
-            accessedAt: now,
         },
     });
-    if(!created) {
-        user.set({
-            accessedAt: new Date(),
-        });
-        await user.save();
-    }
     const token = jsonWebToken.sign({}, config.secret, {
         subject: String(user.userId),
     });
@@ -108,8 +101,6 @@ async function save(req: Request, models: Models, config: ConfigType) {
                 hash: blueprintHash,
                 data: blueprintData,
                 gameId,
-                createdAt: now,
-                accessedAt: now,
             },
             transaction,
         });
@@ -118,10 +109,6 @@ async function save(req: Request, models: Models, config: ConfigType) {
             if(blueprintData != existingBlueprint.data) {
                 throw new Error('hash collision');
             }
-            existingBlueprint.set({
-                accessedAt: new Date(),
-            });
-            await existingBlueprint.save({transaction});
         }
 
         const [userBlueprint, userBlueprintCreated] = await models.UserBlueprint.findOrCreate({
@@ -184,10 +171,6 @@ async function load(req: Request, models: Models, config: ConfigType) {
         accessedAt: new Date(),
     });
     await userBlueprint.save();
-    existingBlueprint.set({
-        accessedAt: new Date(),
-    });
-    await existingBlueprint.save();
 
     return {
         gameId: existingBlueprint.gameId,

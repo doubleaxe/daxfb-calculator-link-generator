@@ -1,0 +1,49 @@
+name: Build and Deploy Release
+on:
+  push:
+    tags:
+      - v1.*
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: "deploy"
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+      - name: Install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build
+        run: |
+          pnpm run build
+      - name: Get tag name
+        run: echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Zip release artifact
+        run: |
+          zip -r daxfb-calculator-link-generator-${{ env.RELEASE_TAG }}.zip *
+        working-directory: dist
+      - name: Build changelog
+        id: changelog
+        uses: metcalfc/changelog-generator@v4.0.1
+        with:
+          myToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create release
+        uses: softprops/action-gh-release@v0.1.15
+        with:
+          draft: true
+          prerelease: false
+          generate_release_notes: false
+          body_path: CHANGELOG.txt
+          files: |
+            dist/daxfb-calculator-link-generator-${{ env.RELEASE_TAG }}.zip

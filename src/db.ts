@@ -30,15 +30,12 @@ class Blueprint extends Model<InferAttributes<Blueprint>, InferCreationAttribute
     declare data: string;
     declare hash: string;
     declare gameId: string;
-    declare createdAt: Date;
-    declare accessedAt: Date;
 }
 
 class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
     declare userId: CreationOptional<number>;
     declare ip: string | null;
     declare createdAt: Date;
-    declare accessedAt: Date;
 
     declare getBlueprints: BelongsToManyGetAssociationsMixin<Blueprint>;
     declare countBlueprints: BelongsToManyCountAssociationsMixin<Blueprint>;
@@ -82,16 +79,6 @@ export async function registerModels(sequelize: Sequelize) {
             type: DataTypes.STRING(50),
             allowNull: false,
         },
-        createdAt: {
-            type: DataTypes.DATE,
-            allowNull: false,
-            defaultValue: DataTypes.NOW,
-        },
-        accessedAt: {
-            type: DataTypes.DATE,
-            allowNull: false,
-            defaultValue: DataTypes.NOW,
-        },
     }, {
         sequelize,
         modelName: 'blueprint',
@@ -112,11 +99,6 @@ export async function registerModels(sequelize: Sequelize) {
             allowNull: true,
         },
         createdAt: {
-            type: DataTypes.DATE,
-            allowNull: false,
-            defaultValue: DataTypes.NOW,
-        },
-        accessedAt: {
             type: DataTypes.DATE,
             allowNull: false,
             defaultValue: DataTypes.NOW,
